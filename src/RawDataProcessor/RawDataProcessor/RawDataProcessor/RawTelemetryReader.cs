@@ -4,7 +4,6 @@ using System.Data;
 using System.Threading.Tasks;
 using Azure.Core;
 using Azure.Identity;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 
