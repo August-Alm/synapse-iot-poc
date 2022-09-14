@@ -22,6 +22,7 @@ GO
 -- Unfortunately, automatic schema-inferring inspects the schema of the first file, and uses that schema.  It doesn't 
 -- look at the schema's of all the files and combines them.
 -- Therefore, we use the WITH clause 
+-- OBS: Be sure to replace <datalakeUniqueName> before running.
 
 DROP VIEW IF EXISTS parquetdata
 GO
@@ -29,7 +30,7 @@ CREATE VIEW parquetdata
 AS
     SELECT r.filepath(1) as device, *
     FROM OPENROWSET(
-        BULK 'https://fgdatalakepocstorage.blob.core.windows.net/parquet-contents/device=*/*.parquet',
+        BULK 'https://<datalakeUniqueName>.blob.core.windows.net/parquet-contents/device=*/*.parquet',
         FORMAT = 'parquet'
     ) 
     with(

@@ -34,8 +34,8 @@ Go to the Azure Portal and find the Azure Synapse resource that has been deploye
 
 Execute the scripts that are found in the `create-rawdatabase.sql` and `create-user.sql` files via the Synapse Workspace.  Do this via the 'Develop' tab and upload functionality and make sure that you're connected to the 'Built-in' pool.
 
-> Make sure that the address of the DataLake is set correctly in those scripts.
-> Make sure that the name of the Function app is correctly set in the `create-user.sql` script.
+> Make sure that the address of the Data Lake (`<datalakeUniqueName>`) is set correctly in `create-rawdatabase.sql`.
+> Make sure that the name of the Function app (`<funcUniqueName>`) is correctly set in the `create-user.sql` script.
 
 ## Running the solution
 
