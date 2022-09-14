@@ -20,9 +20,8 @@ namespace RawDataProcessor
 
         [FunctionName(nameof(ProcessTelemetryFunction))]
         public async Task Run(
-            //[TimerTrigger("0 */2 * * * *", RunOnStartup = true)] TimerInfo myTimer, ILogger log)
-            [TimerTrigger("0 */2 * * * *", RunOnStartup = false)] TimerInfo myTimer, ILogger log)
-            //[BlobTrigger("telemetry-rawdata/year={year}/month={month}/date={date}/{fileName}", Connection = "ParquetStorage")]Stream blobStream, string fileName, ILogger log)
+            //[TimerTrigger("0 */2 * * * *", RunOnStartup = false)] TimerInfo myTimer, ILogger log)
+            [BlobTrigger("telemetry-rawdata/year={year}/month={month}/date={date}/{fileName}", Connection = "ParquetStorage")]Stream blobStream, string fileName, ILogger log)
         {
             var settings = await Settings.GetSettingsAsync(_configuration["SettingsStorage"]);
             var telemetryReader = new RawTelemetryReader(_configuration["RawTelemetryConnectionString"]);
