@@ -43,11 +43,11 @@ namespace RawDataProcessor
             var timestampColumn = new DateTimeDataField("timestamp", DateTimeFormat.DateAndTime, hasNulls: false);
             columnDefinitions.Add(deviceIdColumn);
             columnDefinitions.Add(timestampColumn);
-            var uniqueMetricNames = dayTelemetry.SelectMany(x => x.Metrics).Select(m => m.Tag).Distinct().OrderBy(_ => _);
-            foreach (var metricName in uniqueMetricNames)
+            var uniqueReadingNames = dayTelemetry.SelectMany(x => x.Readings).Select(m => m.Tag).Distinct().OrderBy(_ => _);
+            foreach (var readingName in uniqueReadingNames)
             {
-                var metricColumn = new DataField(metricName, DataType.Double, hasNulls: true);
-                columnDefinitions.Add(metricColumn);
+                var readingColumn = new DataField(readingName, DataType.Double, hasNulls: true);
+                columnDefinitions.Add(readingColumn);
             }
             var schema = new Schema(columnDefinitions.ToArray());
             // TODO: for perf reasons, it is advised that a rowgroup doesn't exceed 5000 rows.
@@ -68,8 +68,8 @@ namespace RawDataProcessor
                     // value for that column, null must be added.
                     for (int i = 2; i < columnDefinitions.Count; i++)
                     {
-                        var metric = telemetry.Metrics.FirstOrDefault(m => m.Tag == columnDefinitions[i].Name);
-                        values.Add(metric?.Value);
+                        var reading = telemetry.Readings.FirstOrDefault(m => m.Tag == columnDefinitions[i].Name);
+                        values.Add(reading?.Value);
                     }
                     Row r = new Row(values);
                     t.Add(r);
