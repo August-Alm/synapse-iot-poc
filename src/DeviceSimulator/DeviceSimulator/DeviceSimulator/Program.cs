@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Azure.Devices.Client;
 using Microsoft.Extensions.Configuration;
@@ -11,34 +13,47 @@ namespace DeviceSimulator
     {
         private static bool _stopApplication = false;
 
-        static async Task Main(string[] args)
+        private static IConfiguration _configuration = GetConfiguration();
+
+        private static IEnumerable<IConfigurationSection> Devices(string[] deviceIds)
         {
-            var configuration = GetConfiguration();
+            if (deviceIds == null || deviceIds.Length == 0)
+            {
+                return _configuration.GetSection("Devices").GetChildren();
+            }
+            return deviceIds.Select(d => _configuration.GetSection($"Devices:{d}"));
+        }
+        static async Task Main(string[] deviceIds)
+        {
             Console.CancelKeyPress += Console_CancelKeyPress;
-            Console.WriteLine("Connecting to IoT Hub ...");
-            DeviceClient client = DeviceClient.CreateFromConnectionString(configuration["ConnectionStrings:SimulatorDevice"]);
-            await client.OpenAsync();
-            Console.WriteLine("Connected! Sending messages to IoT Hub, CTRL+C to stop.");
+            Console.WriteLine("Connecting to IoT Hub ... Press CTRL+C to stop application.");
+            var devices = Devices(deviceIds);
             while (!_stopApplication)
             {
-                TelemetryMessage telemetry = GenerateSampleTelemetry();
-                Message deviceMessage = CreateDeviceMessageForTelemetryMessage(telemetry);
-                await client.SendEventAsync(deviceMessage);
-                await Task.Delay(TimeSpan.FromMilliseconds(500));
+                foreach (var device in devices)
+                {
+                    var connString = device["ConnectionString"];
+                    var client = DeviceClient.CreateFromConnectionString(connString);
+                    await client.OpenAsync();
+                    var readings = device.GetSection("Readings").GetChildren().Select(r => r.Value);
+                    var telemetry = GenerateSampleTelemetry(device.Key, readings);
+                    var message = CreateDeviceMessageForTelemetryMessage(telemetry);
+                    await client.SendEventAsync(message);
+                    Console.WriteLine("Sent message {0}", telemetry);
+                    await client.CloseAsync();
+                }
             }
             Console.WriteLine("Stopping...");
-            await client.CloseAsync();
             Console.WriteLine("Stopped.");
         }
 
         private static IConfiguration GetConfiguration()
         {
-            var configuration =
+            return
                 new ConfigurationBuilder()
                     .AddJsonFile("appsettings.json", optional: false)
                     .AddJsonFile("appsettings.local.json", optional: true)
                     .Build();
-            return configuration;
         }
 
         private static Message CreateDeviceMessageForTelemetryMessage(TelemetryMessage telemetry)
@@ -51,15 +66,14 @@ namespace DeviceSimulator
             return message;
         }
 
-        private static TelemetryMessage GenerateSampleTelemetry()
+        private static TelemetryMessage GenerateSampleTelemetry(string deviceId, IEnumerable<string> tags)
         {
-            var message = new TelemetryMessage()
+            return new TelemetryMessage()
             {
                 Timestamp = DateTimeOffset.UtcNow,
-                DeviceId = DeviceList.PickRandomDeviceId(),
-                Metrics = MetricList.GenerateRandomMetrics()
+                DeviceId = deviceId,
+                Readings = Ranges.RandomReadings(tags)
             };
-            return message;
         }
 
         private static void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e)

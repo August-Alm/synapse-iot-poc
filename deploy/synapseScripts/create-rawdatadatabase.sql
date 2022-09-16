@@ -11,7 +11,7 @@ CREATE VIEW telemetrydata
 AS
     SELECT *, rows.filepath(1) as [Year], rows.filepath(2) AS [Month], rows.filepath(3) AS [Date]
     FROM OPENROWSET(
-        BULK 'https://fgdatalakepocstorage.blob.core.windows.net/telemetry-rawdata/year=*/month=*/date=*/*.json',
+        BULK 'https://<datalakeUniqueName>.blob.core.windows.net/telemetry-rawdata/year=*/month=*/date=*/*.json',
         FORMAT = 'csv',
         FIELDTERMINATOR ='0x0b',
         FIELDQUOTE = '0x0b'

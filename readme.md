@@ -39,30 +39,43 @@ Execute the scripts that are found in the `create-rawdatabase.sql` and `create-u
 
 ## Running the solution
 
-Once all infrastructure has been deployed, we can run the PoC.  There's just one thing that must be taken care of: a device must be registered in IoT Hub which will represent our 'telemetry simulator'.
-To do that, run the following Azure CLI command:
+Open the DeviceSimulator solution, and find the `appsettings.json` file. It is supposed to list the data necessary for simulating a number of IoT devices sending telemetry data to the IoT Hub. Per default, the file contains a single device, named `telemetrysimulator`.
+
+```json
+{
+  "Devices" : {
+    "telemetrysimulator" : {
+      "ConnectionString" : "",
+      "Readings" : ["lumen", "flux", "ph"]
+    }
+  }
+}
+```
+
+A device must be registered in IoT Hub, with the same name. To do that, run the following Azure CLI command:
 
 ```azcli
 az iot hub device-identity create -n <iothubUniqueName> -d telemetrysimulator
 ```
 
-The command might prompt you to install the Azure CLI extension azure-iot.
-
-### Run the device simulator
-
-Open the DeviceSimulator solution, and find the `appsettings.json` file.  In this file, the connectionstring of the device that has been created in IoT Hub must be set.   You can find that connectionstring either via the Azure Portal, or by executing this Azure CLI command:
+(The command might prompt you to install the Azure CLI extension azure-iot.) The device must also have the ConnectionString properly set in the `appsettings.json` file.
+You can find that connectionstring either via the Azure Portal, or by executing this Azure CLI command:
 
 ```azcli
 az iot hub device-identity connection-string show -n <iothubUniqueName> -d telemetrysimulator
 ```
 
-Once the connectionstring has been set in the appsettings.json file, run
+If you want to use some other name than "telemetrysimulator" for the device, that is of course fine, just make sure the names agree. You can also add multiple decives, each with its own measurement reading. The possible units of measurments ("lumen", "flux", "ph", etc) for readings sent by the device are listed in the file `Ranges.cs`.
+
+### Run the device simulator
+
+Once the devices have been registered and their connectionstrings have been set in the appsettings.json, run
 
 ```zsh
 dotnet run
 ```
 
-inside ``src/DeviceSimulator/DeviceSimulator`` and the simulator should start sending messages to IoT Hub. (Stop the program after some minutes so as to not exceed the daily quota.)
+inside ``src/DeviceSimulator/DeviceSimulator`` and the simulator should start sending messages to IoT Hub. (Stop the program after some minutes so as to not exceed the daily quota.) To avoid commiting the connection string to version history, create a copy of `appsettings.json` named `appsettings.local.json` instead, and fill in the data there.
 
 Verify if data is being received in IoT Hub:
 
@@ -74,7 +87,7 @@ After a while, you should also that files are being created in the `telemetry-ra
 
 ### Publish the RawDataProcessor solution to Azure
 
-Open the RawDataProcessor solution and publish the solution to the (Linux) Function App that has been deployed in Azure.  This can easily be done from Visual Studio.NET but make sure that you select `linux-x64` as Target Runtime.
+Open the RawDataProcessor solution and publish the solution to the (Linux) Function App that has been deployed in Azure. This can easily be done from Visual Studio.NET but make sure that you select `linux-x64` as Target Runtime.
 
 Once deployed, the Function will start processing the raw telemetry that is dumped by IoT Hub in the datalake, and will convert it to parquet files that are also stored in the datalake.
 
