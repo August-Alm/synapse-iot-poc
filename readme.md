@@ -13,12 +13,33 @@ First of all, some Azure resources must be created.  This project contains a bic
 If you inspect the `infrastructure.bicep` file, you'll notice that some parameters are declared which you can override to define the resource-names.  
 Most of the parameters have default values. However, there is one parameter which is required to be specified at deployment time: `synapseAdminPassword`
 
+Make sure you are logged in by running
+
+```azcli
+az login
+```
+
+or
+
+```azcli
+az login --tenant <tentantId>
+```
+
+and that you have an active subscription. Also make sure that "Microsoft.Sql" is a registered resource provider for that subscription, by following the [documentation](https://learn.microsoft.com/en-gb/azure/azure-resource-manager/management/resource-providers-and-types).
+
+First create a resource group by running
+
+```azcli
+az group create --name <resourceGroupName> --location westeurope
+```
+
 Create the required Azure resources by executing the following statement:
 
 ```azcli
-az deployment group create --subscription <subscriptionid> --resource-group <resourcegroupname> --template-file infrastructure.bicep --parameters synapseAdminPassword=<your strong password>
+az deployment group create --subscription <subscriptionId> --resource-group <resourceGroupName> --template-file infrastructure.bicep --parameters synapseAdminPassword=<your strong password>
 ```
-(It takes a while before this command finishes and all resources are provisioned)
+
+(It takes a while before this command finishes and all resources are provisioned.)
 
 The password that you have specified, will be stored in the KeyVault resource that is deployed.
 
@@ -30,14 +51,14 @@ This deployment will also make sure that the Function App that is deployed and t
 
 ### Prepare the Synapse workspace
 
-Go to the Azure Portal and find the Azure Synapse resource that has been deployed in the previous step.  Open the Synapse Workspace via the *Workspace web URL* that can be found in the Overview blade. Note that it does not support the Safari browser.
+Go to the Azure Portal and find the Azure Synapse resource that has been deployed in the previous step. Open the Synapse Workspace resource via the *Workspace web URL* that can be found in the Overview blade, or by opening this [link](web.azuresynapse.net). Note that it does not support the Safari browser.
 
 Execute the scripts that are found in the `create-rawdatabase.sql` and `create-user.sql` files via the Synapse Workspace.  Do this via the 'Develop' tab and upload functionality and make sure that you're connected to the 'Built-in' pool.
 
 > Make sure that the address of the Data Lake (`<datalakeUniqueName>`) is set correctly in `create-rawdatabase.sql`.
 > Make sure that the name of the Function app (`<funcUniqueName>`) is correctly set in the `create-user.sql` script.
 
-## Running the solution
+## Running the device simulator
 
 Open the DeviceSimulator solution, and find the `appsettings.json` file. It is supposed to list the data necessary for simulating a number of IoT devices sending telemetry data to the IoT Hub. Per default, the file contains a single device, named `telemetrysimulator`.
 
@@ -117,6 +138,10 @@ If you want to run the Azure Function locally, be sure to create a `local.settin
 In an earlier step, the `parquetdata` view was created.  Use this view to verify if the `RawDataProcessor` is creating queryable parquet files.
 
 ![Parquet Query](static/img/parquet-query.png)
+
+## Extracirrucular: Synapse Lake Database
+
+The parquetdata still contains lots of superflous data corresponding to nonexistent readings ("temp", "humidity" or etc). Investigate the concept of a Synapse lake database.
 
 ## Reporting via PowerBI
 
