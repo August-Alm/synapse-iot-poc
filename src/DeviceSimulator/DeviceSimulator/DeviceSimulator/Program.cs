@@ -19,10 +19,11 @@ namespace DeviceSimulator
         {
             if (deviceIds == null || deviceIds.Length == 0)
             {
-                return _configuration.GetSection("Devices").GetChildren();
+                deviceIds = _configuration.GetSection("Devices").GetChildren().Select(r => r.Key).ToArray();
             }
             return deviceIds.Select(d => _configuration.GetSection($"Devices:{d}"));
         }
+
         static async Task Main(string[] deviceIds)
         {
             Console.CancelKeyPress += Console_CancelKeyPress;
@@ -33,14 +34,17 @@ namespace DeviceSimulator
                 foreach (var device in devices)
                 {
                     var connString = device["ConnectionString"];
-                    var client = DeviceClient.CreateFromConnectionString(connString);
-                    await client.OpenAsync();
-                    var readings = device.GetSection("Readings").GetChildren().Select(r => r.Value);
-                    var telemetry = GenerateSampleTelemetry(device.Key, readings);
-                    var message = CreateDeviceMessageForTelemetryMessage(telemetry);
-                    await client.SendEventAsync(message);
-                    Console.WriteLine("Sent message {0}", telemetry);
-                    await client.CloseAsync();
+                    if (!String.IsNullOrWhiteSpace(connString))
+                    {
+                        var client = DeviceClient.CreateFromConnectionString(connString);
+                        await client.OpenAsync();
+                        var readings = device.GetSection("Readings").GetChildren().Select(r => r.Value);
+                        var telemetry = GenerateSampleTelemetry(device.Key, readings);
+                        var message = CreateDeviceMessageForTelemetryMessage(telemetry);
+                        await client.SendEventAsync(message);
+                        Console.WriteLine("Sent message {0}", telemetry);
+                        await client.CloseAsync();
+                    }
                 }
             }
             Console.WriteLine("Stopping...");
